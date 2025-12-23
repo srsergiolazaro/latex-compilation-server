@@ -1,5 +1,8 @@
 # latex_server.py - FastAPI server for LaTeX compilation
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+import shutil
+import glob
+import zipfile
 from fastapi.responses import Response
 from pydantic import BaseModel
 import subprocess
@@ -108,6 +111,117 @@ async def compile_latex(request: LaTeXRequest):
             logger.error(f"Compilation error: {str(e)}")
             raise HTTPException(
                 status_code=500, detail=f"Compilation error: {str(e)}")
+
+
+@app.post("/compile-zip", response_class=Response)
+async def compile_zip(
+    file: UploadFile = File(...),
+    main_filename: str = Form(None)
+):
+    """
+    Compile a zipped LaTeX project to PDF
+    """
+    if not check_pdflatex():
+        raise HTTPException(status_code=500, detail="pdflatex not available")
+
+    # Validate file extension
+    if not file.filename.endswith('.zip'):
+        raise HTTPException(status_code=400, detail="File must be a ZIP archive")
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        zip_path = os.path.join(temp_dir, "project.zip")
+        
+        try:
+            # Save uploaded ZIP file
+            with open(zip_path, "wb") as f:
+                shutil.copyfileobj(file.file, f)
+            
+            # Extract ZIP file
+            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                zip_ref.extractall(temp_dir)
+            
+            # Find main .tex file
+            tex_file = None
+            if main_filename:
+                possible_path = os.path.join(temp_dir, main_filename)
+                if os.path.exists(possible_path):
+                    tex_file = possible_path
+            
+            if not tex_file:
+                # smart detection
+                tex_files = glob.glob(os.path.join(temp_dir, "**/*.tex"), recursive=True)
+                # Filter out files in __MACOSX or hidden directories
+                tex_files = [f for f in tex_files if "__MACOSX" not in f and not os.path.basename(f).startswith(".")]
+
+                if not tex_files:
+                    raise HTTPException(status_code=400, detail="No .tex files found in ZIP")
+                
+                # If main.tex exists, use it
+                main_candidates = [f for f in tex_files if os.path.basename(f) == "main.tex"]
+                if main_candidates:
+                    tex_file = main_candidates[0]
+                else:
+                    # Otherwise use the first one found (naively)
+                    tex_file = tex_files[0]
+            
+            logger.info(f"Compiling {tex_file}")
+            
+            # Working directory for pdflatex should be the directory containing the tex file
+            work_dir = os.path.dirname(tex_file)
+            tex_filename = os.path.basename(tex_file)
+            
+            # Compile (first pass)
+            logger.info("Running pdflatex (first pass)")
+            result1 = subprocess.run(
+                ["pdflatex", "-interaction=nonstopmode", tex_filename],
+                cwd=work_dir,
+                capture_output=True, text=True, timeout=30
+            )
+            
+            if result1.returncode != 0:
+                logger.error(f"First pdflatex pass failed: {result1.stderr[:200]}")
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"LaTeX compilation failed: {result1.stdout[:500]} \n {result1.stderr[:500]}"
+                )
+                
+            # Compile (second pass)
+            logger.info("Running pdflatex (second pass)")
+            subprocess.run(
+                ["pdflatex", "-interaction=nonstopmode", tex_filename],
+                cwd=work_dir,
+                capture_output=True, text=True, timeout=30
+            )
+            
+            # Result PDF path
+            pdf_filename = os.path.splitext(tex_filename)[0] + ".pdf"
+            pdf_file = os.path.join(work_dir, pdf_filename)
+            
+            if not os.path.exists(pdf_file):
+                raise HTTPException(status_code=500, detail="PDF file was not created")
+                
+            # Read and return PDF
+            with open(pdf_file, "rb") as f:
+                pdf_content = f.read()
+            
+            return Response(
+                content=pdf_content,
+                media_type="application/pdf",
+                headers={
+                    "Content-Disposition": f"attachment; filename={pdf_filename}"
+                }
+            )
+
+        except zipfile.BadZipFile:
+            raise HTTPException(status_code=400, detail="Invalid ZIP file")
+        except subprocess.TimeoutExpired:
+            raise HTTPException(status_code=408, detail="LaTeX compilation timeout")
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Compilation error: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Compilation error: {str(e)}")
+
 
 
 @app.post("/compile-status")
