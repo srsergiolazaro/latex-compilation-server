@@ -3,31 +3,34 @@
 # =========================
 FROM python:3.11-slim AS latex-base
 
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Update and install basic system tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     ca-certificates \
-    \
-    # ---- Core TeX Live ----
+    perl \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Core TeX Live
+RUN apt-get update && apt-get install -y --no-install-recommends \
     texlive-base \
     texlive-latex-base \
     texlive-latex-recommended \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install TeX Live Extras and Fonts
+RUN apt-get update && apt-get install -y --no-install-recommends \
     texlive-latex-extra \
-    \
-    # ---- Fonts ----
     texlive-fonts-recommended \
     texlive-fonts-extra \
-    \
-    # ---- Scientific publishing ----
+    texlive-pictures \
+    texlive-lang-spanish \
     texlive-publishers \
     texlive-bibtex-extra \
     biber \
-    \
-    # ---- Graphics / plots ----
-    texlive-pictures \
-    \
-    # ---- Languages (Spanish) ----
-    texlive-lang-spanish \
-    \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
