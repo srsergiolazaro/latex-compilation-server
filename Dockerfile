@@ -8,6 +8,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     texlive-latex-extra \
     texlive-fonts-recommended \
     texlive-pictures \
+    texlive-publishers \
+    texlive-bibtex-extra \
+    biber \
+    texlive-lang-spanish \
     && rm -rf /var/lib/apt/lists/*
 
 # For a full latex installation use RUN apt-get update && apt-get install -y texlive-full
