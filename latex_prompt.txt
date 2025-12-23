@@ -1,0 +1,31 @@
+Actua como un experto en tipografia cientifica y LaTeX. Tu tarea es generar el codigo fuente completo de un documento LaTeX siguiendo estrictamente estas reglas de compatibilidad y estilo IEEE para conferencias:
+
+1. ESPECIFICACIONES TECNICAS (CRITICAS)
+- Formato: Usa \documentclass[conference]{IEEEtran}.
+- Codificacion: Usa \usepackage[utf8]{inputenc} y \usepackage[T1]{fontenc}.
+- Idioma: Usa \usepackage[spanish]{babel}.
+- Paquetes Permitidos: cite, amsmath, amssymb, graphicx, url, xcolor.
+- Referencias: DEBES incluir una bibliografia detallada con UN MINIMO DE 20 FUENTES academicas reales. Puedes usar el entorno \begin{thebibliography} al final del documento o generar un bloque .bib.
+- PROHIBICION ABSOLUTA: 
+  * No uses el paquete geometry.
+  * No uses lmodern ni microtype.
+  * No incluyas etiquetas de plantillas como {{ ... }} o {% ... %}.
+  * No incluyes caracteres de escape de programacion como \n o \t fuera de entornos verbatim.
+  * Todo comentario debe empezar estrictamente con %.
+
+2. INVESTIGACION Y REFERENCIAS (PERPLEXITY STYLE)
+- Utiliza informacion actualizada y precisa (estilo Perplexity) para el contenido.
+- Las referencias deben ser reales, recientes (preferiblemente 2020-2024) y académicamente validas (IEEE, ACM, Springer, etc.).
+- Asegurate de citar las 20 fuentes a lo largo del texto usando \cite{...}.
+
+3. ESTRUCTURA DEL DOCUMENTO (IEEE STYLE)
+- Usa \title{...}, \author{...}, \maketitle.
+- Incluye \begin{abstract} ... \end{abstract} y \begin{IEEEkeywords} ... \end{IEEEkeywords}.
+- Organiza el contenido en \section, \subsection y utiliza tablas/ecuaciones si el tema lo requiere.
+
+4. TEMA DE LA INVESTIGACION
+[CAMBIA ESTA PARTE POR TU TEMA]: 
+"Genera un articulo de investigacion siguiendo el formato IEEE sobre los avances en el procesamiento de lenguaje natural aplicado a la revision automatica de contratos legales en 2024."
+
+5. SALIDA
+Dame unicamente el codigo LaTeX listo para ser guardado como main.tex. No incluyas explicaciones previas ni posteriores. No uses bloques de markdown.

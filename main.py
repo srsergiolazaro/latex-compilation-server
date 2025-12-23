@@ -38,7 +38,7 @@ def check_pdflatex():
     """Check if pdflatex is available"""
     try:
         result = subprocess.run(['pdflatex', '--version'],
-                                capture_output=True, text=True, timeout=5)
+                                capture_output=True, text=False, timeout=5)
         return result.returncode == 0
     except:
         return False
@@ -69,14 +69,17 @@ async def compile_latex(request: LaTeXRequest):
             result1 = subprocess.run(
                 ["pdflatex", "-interaction=nonstopmode",
                     "-output-directory", temp_dir, tex_file],
-                capture_output=True, text=True, timeout=30
+                capture_output=True, text=False, timeout=30
             )
 
+            stdout = result1.stdout.decode('utf-8', errors='replace')
+            stderr = result1.stderr.decode('utf-8', errors='replace')
+
             if result1.returncode != 0:
-                logger.error(f"First pdflatex pass failed: {result1}")
+                logger.error(f"First pdflatex pass failed: {stderr[:200]}")
                 raise HTTPException(
                     status_code=400,
-                    detail=f"LaTeX compilation failed: {result1.stderr[:500]}"
+                    detail=f"LaTeX compilation failed: {stdout[:500]} \n {stderr[:500]}"
                 )
 
             # Second pass for references
@@ -84,7 +87,7 @@ async def compile_latex(request: LaTeXRequest):
             subprocess.run(
                 ["pdflatex", "-interaction=nonstopmode",
                     "-output-directory", temp_dir, tex_file],
-                capture_output=True, text=True, timeout=30
+                capture_output=True, text=False, timeout=30
             )
 
             # Check if PDF was created
@@ -175,14 +178,17 @@ async def compile_zip(
             result1 = subprocess.run(
                 ["pdflatex", "-interaction=nonstopmode", tex_filename],
                 cwd=work_dir,
-                capture_output=True, text=True, timeout=30
+                capture_output=True, text=False, timeout=30
             )
             
+            stdout = result1.stdout.decode('utf-8', errors='replace')
+            stderr = result1.stderr.decode('utf-8', errors='replace')
+            
             if result1.returncode != 0:
-                logger.error(f"First pdflatex pass failed: {result1.stderr[:200]}")
+                logger.error(f"First pdflatex pass failed: {stderr[:200]}")
                 raise HTTPException(
                     status_code=400, 
-                    detail=f"LaTeX compilation failed: {result1.stdout[:500]} \n {result1.stderr[:500]}"
+                    detail=f"LaTeX compilation failed: {stdout[:500]} \n {stderr[:500]}"
                 )
                 
             # Compile (second pass)
@@ -190,7 +196,7 @@ async def compile_zip(
             subprocess.run(
                 ["pdflatex", "-interaction=nonstopmode", tex_filename],
                 cwd=work_dir,
-                capture_output=True, text=True, timeout=30
+                capture_output=True, text=False, timeout=30
             )
             
             # Result PDF path
@@ -246,15 +252,18 @@ async def compile_latex_with_status(request: LaTeXRequest):
             result = subprocess.run(
                 ["pdflatex", "-interaction=nonstopmode",
                     "-output-directory", temp_dir, tex_file],
-                capture_output=True, text=True, timeout=30
+                capture_output=True, text=False, timeout=30
             )
+
+            stdout = result.stdout.decode('utf-8', errors='replace')
+            stderr = result.stderr.decode('utf-8', errors='replace')
 
             pdf_exists = os.path.exists(pdf_file)
 
             return CompilationResult(
                 success=result.returncode == 0 and pdf_exists,
                 message=f"Compilation {'successful' if result.returncode == 0 and pdf_exists else 'failed'}",
-                log=result.stdout + "\n" + result.stderr
+                log=stdout + "\n" + stderr
             )
 
         except Exception as e:
