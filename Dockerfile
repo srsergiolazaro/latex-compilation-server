@@ -7,7 +7,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     texlive-latex-recommended \
     texlive-latex-extra \
     texlive-fonts-recommended \
-    texlive-fonts-extra \
     texlive-pictures \
     && rm -rf /var/lib/apt/lists/*
 
