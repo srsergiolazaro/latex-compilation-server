@@ -5,6 +5,22 @@ build/
 dist/
 wheels/
 *.egg-info
+.coverage
+.pytest_cache/
 
 # Virtual environments
 .venv
+
+# macOS
+.DS_Store
+
+# LaTeX
+*.aux
+*.log
+*.out
+*.toc
+*.pdf
+*.zip
+*.gz
+*.fdb_latexmk
+*.fls
