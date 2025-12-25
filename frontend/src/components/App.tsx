@@ -106,7 +106,6 @@ export default function App() {
         if (isCompiling) return;
         setIsCompiling(true);
         setError(null);
-        setLogs(null);
         const startTime = Date.now();
         try {
             // Get logs first for better experience
@@ -116,8 +115,10 @@ export default function App() {
             const blob = await compileLaTeX(content, title, id);
             const url = URL.createObjectURL(blob);
 
-            if (pdfUrl) URL.revokeObjectURL(pdfUrl);
-            setPdfUrl(url);
+            setPdfUrl(prev => {
+                if (prev) URL.revokeObjectURL(prev);
+                return url;
+            });
 
             const duration = Date.now() - startTime;
             setCompilationTimes(prev => [duration, ...prev].slice(0, 5));
