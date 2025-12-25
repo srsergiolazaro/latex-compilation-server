@@ -1,36 +1,12 @@
 services:
-  latex-server:
-    build: .
-    ports:
-      - "7474:8000"
-    container_name: latex-server
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
-    environment:
-      - PYTHONUNBUFFERED=1
-    volumes:
-      - ./logs:/app/logs
-    networks:
-      - latex-network
-
-  latex-ui:
+  latex-app:
     build: ./frontend
     ports:
-      - "4321:4321"
-    container_name: latex-ui
+      - "7474:7474"
+    container_name: latex-app
     restart: unless-stopped
     environment:
-      - PUBLIC_API_URL=http://localhost:7474
-    depends_on:
-      - latex-server
-    networks:
-      - latex-network
-
-networks:
-  latex-network:
-    driver: bridge
+      - NODE_ENV=production
+      - PORT=7474
+    volumes:
+      - ./logs:/app/logs

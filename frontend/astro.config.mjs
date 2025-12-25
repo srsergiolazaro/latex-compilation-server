@@ -8,24 +8,12 @@ import node from '@astrojs/node';
 
 // https://astro.build/config
 export default defineConfig({
-  integrations: [react()],
-
+  output: 'server',
+  server: {
+    port: 7474
+  },
   vite: {
     plugins: [tailwindcss()],
-    server: {
-      proxy: {
-        '/compile': {
-          target: 'https://latex.taptapp.xyz',
-          changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/compile/, '/compile')
-        },
-        '/compile-status': {
-          target: 'https://latex.taptapp.xyz',
-          changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/compile-status/, '/compile-status')
-        }
-      }
-    }
   },
 
   adapter: node({
