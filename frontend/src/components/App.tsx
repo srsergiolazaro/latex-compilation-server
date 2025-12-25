@@ -147,13 +147,12 @@ export default function App() {
         URL.revokeObjectURL(url);
     };
 
-    // Compile on first load
+    // Initial setup
     useEffect(() => {
-        handleCompile();
         return () => {
             if (pdfUrl) URL.revokeObjectURL(pdfUrl);
         };
-    }, [id]); // Re-compile when switching documents
+    }, []);
 
     // Auto-compile logic with dynamic debounce
     useEffect(() => {

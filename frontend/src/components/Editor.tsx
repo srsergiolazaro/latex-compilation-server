@@ -12,57 +12,80 @@ export const Editor: React.FC<EditorProps> = ({ value, onChange }) => {
     function handleEditorDidMount(editor: any, monaco: any) {
         editorRef.current = editor;
 
+        // Register LaTeX language if not already registered
+        monaco.languages.register({ id: 'latex' });
+
+        // Define a Monarch tokenizer for LaTeX
+        monaco.languages.setMonarchTokensProvider('latex', {
+            defaultToken: '',
+            tokenPostfix: '.latex',
+
+            keywords: [
+                'begin', 'end', 'section', 'subsection', 'subsubsection',
+                'paragraph', 'subparagraph', 'title', 'author', 'date',
+                'maketitle', 'tableofcontents', 'listoffigures', 'listoftables',
+                'caption', 'label', 'ref', 'cite', 'bibliography', 'bibliographystyle',
+                'usepackage', 'documentclass', 'newcommand', 'renewcommand',
+                'include', 'input', 'includegraphics', 'emph', 'textbf', 'textit',
+                'texttt', 'underline', 'chapter', 'part', 'appendix', 'makeatletter',
+                'makeatother', 'hfill', 'vfill'
+            ],
+
+            tokenizer: {
+                root: [
+                    // Commands
+                    [/\\([a-zA-Z]+)/, {
+                        cases: {
+                            '@keywords': 'keyword',
+                            '@default': 'keyword.command'
+                        }
+                    }],
+
+                    // Punctuation
+                    [/[{}()\[\]]/, '@brackets'],
+
+                    // Math mode (inline and block)
+                    [/\$[^$]*\$/, 'punctuation.math'],
+                    [/\$\$[\s\S]*?\$\$/, 'punctuation.math'],
+                    [/\\\(|\\\)|\\\[|\\\]/, 'punctuation.math'],
+
+                    // Math environments
+                    [/\\begin\{(equation|align|displaymath|gather|multline|split)\}/, 'keyword.math'],
+                    [/\\end\{(equation|align|displaymath|gather|multline|split)\}/, 'keyword.math'],
+
+                    // Comments
+                    [/%.*/, 'comment'],
+
+                    // Escaped characters
+                    [/\\(\$|&|%|#|_|\{|\}|~|\^|\\)/, 'constant.character.escape'],
+
+                    // Numbers
+                    [/\d+/, 'number'],
+                ],
+            },
+        });
+
         // Define a comprehensive and professional LaTeX dark theme
         monaco.editor.defineTheme('latex-dark', {
             base: 'vs-dark',
             inherit: true,
             rules: [
-                // Commands and Environments
-                { token: 'keyword.latex', foreground: 'C678DD', fontStyle: 'bold' },     // \begin, \section
-                { token: 'keyword.control.latex', foreground: 'C678DD' },              // \if, \else
-                { token: 'storage.type.function.latex', foreground: 'C678DD' },        // \newcommand
-
-                // Arguments and Parameters
-                { token: 'string.latex', foreground: '98C379' },                       // Mandatory arguments {}
-                { token: 'variable.parameter.latex', foreground: 'D19A66' },           // Optional arguments []
-                { token: 'variable.other.latex', foreground: 'D19A66' },               // Internal variables
-
-                // Math Mode
-                { token: 'keyword.operator.math.latex', foreground: '61AFEF' },        // +, -, =, \sum
-                { token: 'variable.other.math.latex', foreground: 'E06C75', fontStyle: 'italic' }, // Math variables (x, y, z)
-                { token: 'punctuation.definition.math.latex', foreground: '61AFEF', fontStyle: 'bold' }, // $ and $$
-                { token: 'constant.numeric.latex', foreground: 'D19A66' },             // Numbers in math
-
-                // Special Characters and Symbols
-                { token: 'constant.character.escape.latex', foreground: '56B6C2' },    // \&, \#, \_
-                { token: 'punctuation.definition.string.latex', foreground: 'ABB2BF' }, // Quote definitions
-
-                // Punctuation and Structure
-                { token: 'punctuation.definition.arguments.latex', foreground: 'ABB2BF' }, // { }
-                { token: 'punctuation.definition.bracket.latex', foreground: 'ABB2BF' },   // [ ]
-                { token: 'punctuation.separator.key-value.latex', foreground: 'ABB2BF' },  // = in options
-
-                // Comments
-                { token: 'comment.latex', foreground: '5C6370', fontStyle: 'italic' },
-
-                // Text body defaults (if fallback is needed)
-                { token: 'text.latex', foreground: 'ABB2BF' },
+                { token: 'keyword', foreground: 'C678DD', fontStyle: 'bold' },
+                { token: 'keyword.command', foreground: 'C678DD' },
+                { token: 'keyword.math', foreground: '61AFEF', fontStyle: 'bold' },
+                { token: 'punctuation.math', foreground: '61AFEF' },
+                { token: 'comment', foreground: '5C6370', fontStyle: 'italic' },
+                { token: 'string', foreground: '98C379' },
+                { token: 'number', foreground: 'D19A66' },
+                { token: 'constant.character.escape', foreground: '56B6C2' },
+                { token: 'delimiter', foreground: 'ABB2BF' }
             ],
             colors: {
-                'editor.background': '#1a1a1a',             // Unified with app background
+                'editor.background': '#1a1a1a',
                 'editor.foreground': '#ABB2BF',
                 'editor.lineHighlightBackground': '#1e2127',
-                'editor.lineHighlightBorder': '#2c313a',
                 'editorLineNumber.foreground': '#4b5263',
-                'editorLineNumber.activeForeground': '#858b9c',
-                'editorIndentGuide.background': '#2c313a',
-                'editorIndentGuide.activeBackground': '#3e4451',
                 'editor.selectionBackground': '#3e4451',
-                'editor.inactiveSelectionBackground': '#2c313a',
-                'editorCursor.foreground': '#528bff',
-                'editorWhitespace.foreground': '#3b4048',
-                'editorWidget.background': '#21252b',
-                'editorWidget.border': '#181a1f',
             }
         });
 
@@ -74,6 +97,7 @@ export const Editor: React.FC<EditorProps> = ({ value, onChange }) => {
             <MonacoEditor
                 height="100%"
                 language="latex"
+                theme="latex-dark"
                 value={value}
                 onChange={onChange}
                 onMount={handleEditorDidMount}
@@ -84,7 +108,6 @@ export const Editor: React.FC<EditorProps> = ({ value, onChange }) => {
                     roundedSelection: false,
                     scrollBeyondLastLine: false,
                     readOnly: false,
-                    theme: 'latex-dark',
                     automaticLayout: true,
                     padding: { top: 20 }
                 }}
