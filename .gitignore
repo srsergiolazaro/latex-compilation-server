@@ -1,20 +1,15 @@
-# Python-generated files
-__pycache__/
-*.py[oc]
-build/
+# Node
+node_modules/
 dist/
-wheels/
-*.egg-info
-.coverage
-.pytest_cache/
+.env
 
-# Virtual environments
-.venv
+# Astro
+.astro/
 
 # macOS
 .DS_Store
 
-# LaTeX
+# LaTeX (temporary files)
 *.aux
 *.log
 *.out
@@ -24,3 +19,6 @@ wheels/
 *.gz
 *.fdb_latexmk
 *.fls
+
+# Project specific
+logs/
