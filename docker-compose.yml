@@ -14,8 +14,20 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
     volumes:
-      # Optional: mount a directory for logs
       - ./logs:/app/logs
+    networks:
+      - latex-network
+
+  latex-ui:
+    build: ./frontend
+    ports:
+      - "4321:4321"
+    container_name: latex-ui
+    restart: unless-stopped
+    environment:
+      - PUBLIC_API_URL=http://localhost:7474
+    depends_on:
+      - latex-server
     networks:
       - latex-network
 
