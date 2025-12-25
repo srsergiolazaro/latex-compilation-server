@@ -86,7 +86,7 @@ export default function App() {
         const newDoc: Document = {
             id: newId,
             title: 'Untitled Document',
-            content: '\\documentclass{article}\n\\begin{document}\n\n\\end{document}',
+            content: '\\documentclass{article}\n\\begin{document}\nHello World!\n\\end{document}',
             lastModified: Date.now()
         };
         setDocs(prev => [newDoc, ...prev]);
