@@ -192,6 +192,7 @@ export default function App() {
                 onGoHome={() => setView('library')}
                 autoCompile={autoCompile}
                 onAutoCompileToggle={() => setAutoCompile(prev => !prev)}
+                showControls={view === 'editor'}
             />
 
             <main className="flex-1 flex overflow-hidden relative">
