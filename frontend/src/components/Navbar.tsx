@@ -13,7 +13,8 @@ import {
     Download,
     Printer,
     Minus,
-    Plus
+    Plus,
+    Zap
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -26,6 +27,8 @@ interface NavbarProps {
     showLogs: boolean;
     setShowLogs: (val: boolean) => void;
     onGoHome: () => void;
+    autoCompile: boolean;
+    onAutoCompileToggle: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -37,7 +40,9 @@ export const Navbar: React.FC<NavbarProps> = ({
     onDownloadTex,
     showLogs,
     setShowLogs,
-    onGoHome
+    onGoHome,
+    autoCompile,
+    onAutoCompileToggle
 }) => {
     return (
         <div className="flex flex-col w-full border-b border-white/10 bg-[#1a1a1a]">
@@ -66,10 +71,22 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <button
                         onClick={onCompile}
                         disabled={isCompiling}
-                        className="flex items-center gap-2 bg-[#4c8bf5] hover:bg-blue-600 disabled:opacity-50 text-white px-3 py-1 rounded text-xs font-semibold mr-2 transition-colors"
+                        className="flex items-center gap-2 bg-[#4c8bf5] hover:bg-blue-600 disabled:opacity-50 text-white px-3 py-1 rounded text-xs font-semibold transition-colors"
                     >
                         <Play size={14} fill="currentColor" />
                         {isCompiling ? 'Compiling...' : 'Compile'}
+                    </button>
+
+                    <button
+                        onClick={onAutoCompileToggle}
+                        className={`flex items-center gap-2 px-3 py-1 rounded text-xs font-semibold transition-colors ${autoCompile
+                                ? 'bg-amber-500/20 text-amber-500 hover:bg-amber-500/30'
+                                : 'bg-white/5 text-zinc-400 hover:bg-white/10'
+                            }`}
+                        title={autoCompile ? "Disable Auto-compile" : "Enable Auto-compile"}
+                    >
+                        <Zap size={14} fill={autoCompile ? "currentColor" : "none"} className={autoCompile ? "animate-pulse" : ""} />
+                        Auto
                     </button>
 
                     <div className="h-4 w-px bg-zinc-700 mx-2" />

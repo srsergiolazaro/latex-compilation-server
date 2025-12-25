@@ -10,3 +10,4 @@ services:
       - PORT=7474
     volumes:
       - ./logs:/app/logs
+      - ./images:/app/images

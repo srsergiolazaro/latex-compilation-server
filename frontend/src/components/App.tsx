@@ -3,6 +3,7 @@ import { Navbar } from './Navbar';
 import { Editor } from './Editor';
 import { Preview } from './Preview';
 import { compileLaTeX, checkCompilationStatus } from '../lib/api';
+import { ImageLibrary } from './ImageLibrary';
 
 const DEFAULT_CONTENT = `\\documentclass{article}
 \\title{Attention Is All You Need}
@@ -25,7 +26,7 @@ interface Document {
     id: string;
     title: string;
     content: string;
-    lastMotified: number;
+    lastModified: number;
 }
 
 const DEFAULT_DOCS: Document[] = [
@@ -33,7 +34,7 @@ const DEFAULT_DOCS: Document[] = [
         id: 'default',
         title: 'Attention Is All You Need',
         content: DEFAULT_CONTENT,
-        lastMotified: Date.now()
+        lastModified: Date.now()
     }
 ];
 
@@ -62,6 +63,8 @@ export default function App() {
     const [error, setError] = useState<string | null>(null);
     const [logs, setLogs] = useState<string | null>(null);
     const [showLogs, setShowLogs] = useState(false);
+    const [autoCompile, setAutoCompile] = useState(false);
+    const [compilationTimes, setCompilationTimes] = useState<number[]>([]);
 
     // Save docs to local storage
     useEffect(() => {
@@ -75,7 +78,7 @@ export default function App() {
     }, [id, hasMounted]);
 
     const updateActiveDoc = (updates: Partial<Document>) => {
-        setDocs(prev => prev.map(d => d.id === id ? { ...d, ...updates, lastMotified: Date.now() } : d));
+        setDocs(prev => prev.map(d => d.id === id ? { ...d, ...updates, lastModified: Date.now() } : d));
     };
 
     const handleCreateDoc = () => {
@@ -84,7 +87,7 @@ export default function App() {
             id: newId,
             title: 'Untitled Document',
             content: '\\documentclass{article}\n\\begin{document}\n\n\\end{document}',
-            lastMotified: Date.now()
+            lastModified: Date.now()
         };
         setDocs(prev => [newDoc, ...prev]);
         setId(newId);
@@ -100,19 +103,24 @@ export default function App() {
     };
 
     const handleCompile = async () => {
+        if (isCompiling) return;
         setIsCompiling(true);
         setError(null);
         setLogs(null);
+        const startTime = Date.now();
         try {
             // Get logs first for better experience
-            const status = await checkCompilationStatus(content, title);
+            const status = await checkCompilationStatus(content, title, id);
             setLogs(status.log || null);
 
-            const blob = await compileLaTeX(content, title);
+            const blob = await compileLaTeX(content, title, id);
             const url = URL.createObjectURL(blob);
 
             if (pdfUrl) URL.revokeObjectURL(pdfUrl);
             setPdfUrl(url);
+
+            const duration = Date.now() - startTime;
+            setCompilationTimes(prev => [duration, ...prev].slice(0, 5));
         } catch (err: any) {
             console.error(err);
             setError(err.message || 'An unknown error occurred during compilation');
@@ -145,7 +153,26 @@ export default function App() {
         return () => {
             if (pdfUrl) URL.revokeObjectURL(pdfUrl);
         };
-    }, []);
+    }, [id]); // Re-compile when switching documents
+
+    // Auto-compile logic with dynamic debounce
+    useEffect(() => {
+        if (!autoCompile || !hasMounted) return;
+
+        const calculateDebounce = () => {
+            const avgTime = compilationTimes.length > 0
+                ? compilationTimes.reduce((a, b) => a + b) / compilationTimes.length
+                : 3000;
+            const sizeFactor = Math.floor(content.length / 1000) * 100;
+            return Math.max(2000, Math.min(avgTime * 1.5 + sizeFactor, 10000));
+        };
+
+        const timeout = setTimeout(() => {
+            handleCompile();
+        }, calculateDebounce());
+
+        return () => clearTimeout(timeout);
+    }, [content, autoCompile, hasMounted]);
 
     if (!hasMounted) {
         return <div className="h-screen w-full bg-[#1a1a1a]" />;
@@ -163,6 +190,8 @@ export default function App() {
                 showLogs={showLogs}
                 setShowLogs={setShowLogs}
                 onGoHome={() => setView('library')}
+                autoCompile={autoCompile}
+                onAutoCompileToggle={() => setAutoCompile(prev => !prev)}
             />
 
             <main className="flex-1 flex overflow-hidden relative">
@@ -187,7 +216,7 @@ export default function App() {
                                         className={`group relative p-6 rounded-2xl border transition-all cursor-pointer ${doc.id === id ? 'border-blue-500 bg-blue-500/5' : 'border-white/5 bg-white/5 hover:border-white/20 hover:bg-white/10'}`}
                                     >
                                         <h3 className="text-lg font-semibold text-white mb-2 truncate">{doc.title}</h3>
-                                        <p className="text-xs text-zinc-500 mb-4">Last edited: {new Date(doc.lastMotified).toLocaleDateString()}</p>
+                                        <p className="text-xs text-zinc-500 mb-4">Last edited: {new Date(doc.lastModified).toLocaleDateString()}</p>
                                         <div className="flex justify-between items-center text-xs uppercase font-bold tracking-widest transition-colors">
                                             <span className="text-zinc-600 group-hover:text-blue-400">Open Project</span>
                                             <button
@@ -206,9 +235,13 @@ export default function App() {
                     </div>
                 )}
 
-                {/* Left Side: Editor */}
-                <div className="w-1/2 h-full flex flex-col min-w-[300px]">
-                    <Editor value={content} onChange={(val) => updateActiveDoc({ content: val || '' })} />
+                <div className="w-1/2 h-full flex flex-col min-w-[300px] border-r border-[#2c2c2c]">
+                    <div className="flex-1 min-h-0">
+                        <Editor value={content} onChange={(val) => updateActiveDoc({ content: val || '' })} />
+                    </div>
+                    <div className="h-1/3 border-t border-[#2c2c2c] overflow-hidden">
+                        <ImageLibrary docId={id} />
+                    </div>
                 </div>
 
                 {/* Divider */}
