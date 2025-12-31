@@ -1,6 +1,30 @@
+# Stage 1: Build the application
+FROM node:20-slim AS builder
+
+WORKDIR /app
+
+# Install pnpm
+RUN npm install -g pnpm
+
+# Copy package files
+COPY package.json pnpm-lock.yaml* ./
+
+# Install dependencies (including devDependencies for building)
+RUN pnpm install
+
+# Copy source code
+COPY . .
+
+# Build Astro
+RUN pnpm run build
+
+# Prune dev dependencies to keep only production ones
+RUN pnpm prune --prod
+
+# Stage 2: Runtime environment
 FROM node:20-slim AS runtime
 
-# Install LaTeX
+# Install LaTeX (Required for runtime)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     texlive-latex-base \
@@ -16,20 +40,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Install pnpm
-RUN npm install -g pnpm
-
-# Copy package files
-COPY package.json pnpm-lock.yaml* ./
-
-# Install dependencies
-RUN pnpm install
-
-# Copy source code
-COPY . .
-
-# Build Astro
-RUN pnpm run build
+# Copy necessary files from builder stage
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package.json ./package.json
 
 ENV HOST=0.0.0.0
 ENV PORT=7474
