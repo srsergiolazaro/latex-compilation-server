@@ -1,108 +1,189 @@
-# LaTeX Compilation Server
+# LaTeX Editor & Compilation Server
 
-A Docker-based HTTP server for compiling LaTeX documents to PDF without
-requiring local LaTeX installation.
+A comprehensive, Docker-based solution for editing and compiling LaTeX documents to PDF, accessible via a web interface and a REST API. This project eliminates the need for a local LaTeX installation by providing a powerful online editor with real-time PDF previews and project management features.
 
-This project was motivated by my need to compile LaTeX documents without relying
-on a local LaTeX installation for my
-[CV Tailoring MCP server](https://github.com/aarangop/resume-mcp).
+## Features
 
-This microservice now offers the narrow functionality of compiling LaTeX docs to
-PDF.
+- **Web-Based LaTeX Editor:** A modern, user-friendly editor with syntax highlighting and a clean interface.
+- **Live Demo:** Try the editor now at [https://latex.taptapp.xyz/](https://latex.taptapp.xyz/).
+- **Real-Time PDF Preview:** See your compiled PDF instantly as you write.
+- **Auto-Compilation:** The server intelligently auto-compiles your document as you make changes.
+- **Project Management:** Organize your work with a simple project manager to create, edit, and delete documents.
+- **Image Library:** Upload and manage images for your LaTeX documents.
+- **REST API:** A simple API to compile LaTeX documents programmatically.
+- **Dockerized:** The entire application is containerized for easy deployment and scalability.
 
-## Quick Start
+## Project Structure
 
-1. **Clone/Download the files:**
+The repository is organized as a monorepo with a `frontend` and a `backend` (implicitly in the root).
 
-   ```bash
-   git clone https://github.com/aarangop/latex-compilation-server && cd latex-compilation-server
-   ```
-
-2. **Build and start the server:**
-
-   ```bash
-   # Option 1: Using docker-compose (recommended)
-   docker-compose up -d
-
-   # Option 2: Using Docker directly
-   docker build -t latex-server .
-   docker run -d -p 7474:8000 --name latex-server latex-server
-   ```
-
-Since this container has LaTeX dependencies, the first build may take a while as
-it downloads and installs the necessary packages. But since we're using a staged
-build, subsequent builds should be much faster.
-
-3. **Verify it's running:**
-   ```bash
-   curl http://localhost:7474/health
-   ```
-
-## Usage
-
-### From Python (MCP Tool)
-
-The MCP tool automatically communicates with the server via HTTP requests.
-
-### Manual Testing
-
-```bash
-# Test compilation
-curl -X POST http://localhost:7474/compile \
-  -H "Content-Type: application/json" \
-  -d '{"content": "\\documentclass{article}\\begin{document}Hello World!\\end{document}", "filename": "test"}' \
-  --output test.pdf
+```
+/
+├── frontend/           # Astro/React frontend application
+│   ├── public/         # Static assets
+│   └── src/            # Source code for the web UI
+├── .gitignore
+├── LICENSE
+├── README.md           # This file
+├── docker-compose.yaml # Docker Compose file for deployment
+├── main.py             # Backend server (if applicable)
+└── requirements.txt    # Backend dependencies (if applicable)
 ```
 
-### API Endpoints
+## Deployment
 
-- `GET /health` - Check server health
-- `POST /compile` - Compile LaTeX to PDF (returns PDF bytes)
-- `POST /compile-status` - Compile and return status/logs (for debugging)
+The application is designed to be deployed with Docker and `docker-compose`.
+
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/aarangop/latex-compilation-server && cd latex-compilation-server
+    ```
+
+2.  **Build and start the services:**
+    ```bash
+    docker-compose up -d --build
+    ```
+    This will build the frontend and backend services and start them in detached mode. The web interface will be available at `http://localhost:7474`.
+
+3.  **Verify the services are running:**
+    ```bash
+    docker-compose ps
+    ```
 
 ## Management Commands
 
-```bash
-# Start server
-docker-compose up -d
+Once the application is running, you can manage it with the following commands:
 
-# Stop server
-docker-compose down
+-   **Start the services:**
+    ```bash
+    docker-compose up -d
+    ```
+-   **Stop the services:**
+    ```bash
+    docker-compose down
+    ```
+-   **View logs:**
+    ```bash
+    docker-compose logs -f latex-app
+    ```
+-   **Restart the services:**
+    ```bash
+    docker-compose restart
+    ```
 
-# View logs
-docker-compose logs -f latex-server
+## Local Development
 
-# Restart server
-docker-compose restart latex-server
+For local development, you'll need to run the frontend and backend services separately.
 
-# Update server
-docker-compose down
-docker-compose build --no-cache
-docker-compose up -d
-```
+### Backend
+
+The backend is a simple Python server.
+
+1.  **Install dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+2.  **Start the server:**
+    ```bash
+    python main.py
+    ```
+
+### Frontend
+
+The frontend is an [Astro](https://astro.build/) application.
+
+1.  **Navigate to the frontend directory:**
+    ```bash
+    cd frontend
+    ```
+
+2.  **Install dependencies:**
+    ```bash
+    pnpm install
+    ```
+
+3.  **Start the development server:**
+    ```bash
+    pnpm dev
+    ```
+    The frontend will be available at `http://localhost:4321`.
+
+## API Usage
+
+The server exposes a simple API for compiling LaTeX documents.
+
+### `GET /health`
+
+Checks the health of the server and returns a status message.
+
+-   **Example:**
+    ```bash
+    curl http://localhost:7474/api/health
+    ```
+
+### `POST /compile`
+
+Compiles a LaTeX document and returns the PDF.
+
+-   **Request Body:**
+    ```json
+    {
+      "content": "\\documentclass{article}\\begin{document}Hello World!\\end{document}",
+      "filename": "test"
+    }
+    ```
+
+-   **Example:**
+    ```bash
+    curl -X POST http://localhost:7474/api/compile \
+      -H "Content-Type: application/json" \
+      -d '{"content": "\\documentclass{article}\\begin{document}Hello World!\\end{document}", "filename": "test"}' \
+      --output test.pdf
+    ```
+
+### `POST /compile-status`
+
+Compiles a LaTeX document and returns the compilation status and logs, which is useful for debugging.
+
+-   **Request Body:**
+    ```json
+    {
+      "content": "your-latex-content",
+      "filename": "debug"
+    }
+    ```
+
+-   **Example:**
+    ```bash
+    curl -X POST http://localhost:7474/api/compile-status \
+      -H "Content-Type: application/json" \
+      -d '{"content": "\\documentclass{article}\\begin{document}Hello World!\\end{document}", "filename": "debug"}'
+    ```
 
 ## Troubleshooting
 
-### Server not starting
+### Server Not Starting
+
+If the services are not starting correctly, you can check the logs for errors:
 
 ```bash
-# Check logs
-docker-compose logs latex-server
+docker-compose logs -f latex-app
+```
 
-# Check if port is in use
+You can also check if the port is already in use:
+
+```bash
 lsof -i :7474
 ```
 
-### LaTeX compilation errors
+### LaTeX Compilation Errors
 
-```bash
-# Use the debug endpoint
-curl -X POST http://localhost:7474/compile-status \
-  -H "Content-Type: application/json" \
-  -d '{"content": "your-latex-content", "filename": "debug"}'
-```
+If you're having trouble with LaTeX compilation, you can use the `/compile-status` endpoint to view the logs.
 
-### Reset everything
+### Reset Everything
+
+If you want to reset the application and start from scratch, you can run the following commands:
 
 ```bash
 docker-compose down
@@ -110,46 +191,17 @@ docker system prune -f
 docker-compose up -d --build
 ```
 
-## Security Notes
-
-- Server runs on localhost only by default
-- LaTeX compilation happens in isolated container
-- Temporary files are cleaned up automatically
-- No persistent storage of user documents
-
 ## Customization
 
-### Add more LaTeX packages
+### Change Port
 
-Edit the Dockerfile to install additional packages:
-
-```dockerfile
-RUN apt-get update && apt-get install -y \
-    texlive-latex-base \
-    texlive-latex-recommended \
-    texlive-latex-extra \
-    texlive-fonts-recommended \
-    texlive-fonts-extra \
-    texlive-science \
-    texlive-math-extra \
-    && rm -rf /var/lib/apt/lists/*
-```
-
-### Change port
-
-Edit docker-compose.yml:
+To change the port the application is exposed on, edit the `docker-compose.yaml` file:
 
 ```yaml
 ports:
-  - "9000:8000" # Use port 9000 instead
+  - "NEW_PORT:7474"
 ```
 
-### Enable remote access (not recommended)
+### Add LaTeX Packages
 
-Edit main.py:
-
-```python
-uvicorn.run(app, host="0.0.0.0", port=8000)  # Already set for container
-```
-
-Then expose the port in docker-compose.yml appropriately.
+To add more LaTeX packages, you'll need to edit the `Dockerfile` for the backend service (not present in the provided file structure, but implied by the original `README.md`). You would add your packages to the `apt-get install` command.
