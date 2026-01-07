@@ -74,6 +74,25 @@ Use this endpoint for projects with multiple files (images, `.bib` files, includ
 2.  **Entry Point**: The server attempts to auto-detect the main file (looks for `main.tex` or the first `.tex` file found). To be safe, always name the main file `main.tex` or explicitly provide `main_filename`.
 3.  **Paths**: Use relative paths for imports (`\includegraphics{images/fig1.png}`).
 
+### 3. Compile Batch Files (`POST /api/compile-batch`)
+
+Use this endpoint to upload multiple files directly without zipping them first.
+
+*   **URL**: `https://latex.taptapp.xyz/api/compile-batch`
+*   **Method**: `POST`
+*   **Headers**: `Content-Type: multipart/form-data`
+*   **Body**:
+    *   Multiple file parts (e.g., `main.tex`, `image.png`, `refs.bib`).
+    *   `main_filename`: (Optional) Name of the main entry point (e.g., `main.tex`).
+*   **Response**:
+    *   **Success (200)**: Binary PDF file.
+    *   **Error (400)**: Compilation failed.
+
+**Usage Instructions for Agents:**
+1.  **Upload Files**: Send each file as a separate part in the `multipart/form-data` request.
+2.  **Entry Point**: Similar to ZIP compilation, the server auto-detects `main.tex` or the first `.tex` file. Explicitly providing `main_filename` is recommended.
+3.  **Directories**: Filenames can contain relative paths (e.g., `images/logo.png`) to preserve structure, although a flat structure is preferred if possible.
+
 ## Error Handling
 
 If the API returns a **400 Bad Request**, the JSON body usually contains a `detail` field with the compiler log.
@@ -90,11 +109,11 @@ When generating LaTeX code for this API:
 
 1.  **Check Libraries**: Verify if requested packages are standard `texlive` packages. Avoid obscure or OS-specific font packages (e.g., `fontspec` requires `xelatex`/`lualatex`, which is **unavailable**).
 2.  **Fonts**: Stick to standard Type 1 fonts (e.g., `mathptmx`, `helvet`, `courier`) or those available in `texlive-fonts-recommended`.
-3.  **Images**: If the user provides images, you must use the `/api/compile-zip` method.
+3.  **Images**: If the user provides images, you must use the `/api/compile-zip` or `/api/compile-batch` method.
 4.  **Formatting**: Ensure the JSON payload in `/api/compile` is valid JSON. Multiline strings must be properly escaped (`\n`).
 
 ### Example: "I want to use the `fontspec` package."
 **Response**: "The `fontspec` package requires XeLaTeX or LuaLaTeX, but the `latex.taptapp.xyz` service only supports `pdflatex`. I will switch to `helvet` (Helvetica) or `mathptmx` (Times) instead."
 
 ### Example: "Here is a project with `main.tex` and `logo.png`."
-**Response**: "I will bundle these into a ZIP file and use the `/api/compile-zip` endpoint."
+**Response**: "I will use the `/api/compile-batch` endpoint to upload the files and compile the project."
