@@ -56,6 +56,11 @@ export const runPdfLatex = (workDir: string, texFilename: string): Promise<{ std
             clearTimeout(timeout);
             resolve({ stdout, stderr, code });
         });
+
+        proc.on('error', (err) => {
+            clearTimeout(timeout);
+            resolve({ stdout, stderr: `[Error] Failed to start pdflatex: ${err.message}`, code: -1 });
+        });
     });
 };
 

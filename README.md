@@ -161,6 +161,21 @@ Compiles a LaTeX document and returns the compilation status and logs, which is 
       -d '{"content": "\\documentclass{article}\\begin{document}Hello World!\\end{document}", "filename": "debug"}'
     ```
 
+### `POST /compile-batch`
+
+Compiles multiple files uploaded as a batch.
+
+-   **Request Body:** `multipart/form-data` with multiple file parts.
+-   **Parameters:** `main_filename` (optional) to specify the main tex file.
+
+-   **Example:**
+    ```bash
+    curl -X POST http://localhost:7474/api/compile-batch \
+      -F "files=@main.tex" \
+      -F "files=@image.png" \
+      --output output.pdf
+    ```
+
 ## Troubleshooting
 
 ### Server Not Starting
